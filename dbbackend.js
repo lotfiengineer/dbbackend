@@ -143,6 +143,20 @@ const server = http.createServer((req, res) => {
     }
   }
 
+  if (req.url.startsWith("/studentsOfProfessors/")) {
+    const id = req.url.split("/").pop();
+
+    const studentsOfProfessorsSqlQuery =
+      `select instructorId, instructorName, studentId, studentName, title from (SELECT * FROM (SELECT instructor.ID as instructorId, course_ID as insCourseId, name as instructorName, dept_name FROM teaches INNER JOIN instructor on teaches.ID = instructor.ID) as ins INNER JOIN (SELECT student.ID as studentId, takes.course_id, student.name as studentName, takes.grade FROM student INNER JOIN takes on student.ID = takes.ID) as std on ins.insCourseId = std.course_id) as temp inner join course on temp.course_ID = course.course_ID where instructorId=${id}`;
+
+    if (req.method === "GET") {
+      connection.query(studentsOfProfessorsSqlQuery, (err, results) => {
+        res.writeHead(200, headers);
+        res.end(JSON.stringify(results));
+      });
+    }
+  }
+
   // gives back the grade of all the students
   // if (req.url === "/studentsWithGrade") {
   //   const studentsWithGradeSqlQuery =
