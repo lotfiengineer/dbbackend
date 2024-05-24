@@ -22,12 +22,41 @@ connection.connect((err) => {
 });
 
 const server = http.createServer((req, res) => {
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
+
   const headers = {
     "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "OPTIONS, POST, GET, DELETE",
-    "Access-Control-Max-Age": 2592000,
+    "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
   };
 
+  // DELETE a student
+  if (req.method === "OPTIONS") {
+    req.method = "DELETE";
+
+    const id = req.url.split("/").pop();
+
+    // Delete data from the database
+    const query = "DELETE FROM student WHERE ID = ?";
+    connection.query(query, [id], (err, results) => {
+      if (err) {
+        console.error("Error deleting data from the database:", err);
+        res.writeHead(500, headers);
+        res.end("Internal Server Error");
+        return;
+      }
+
+      if (results.affectedRows === 0) {
+        res.writeHead(404, headers);
+        res.end("Student not found");
+      } else {
+        res.writeHead(200, headers);
+        res.end("Student deleted");
+      }
+    });
+  }
+
+  // *** Professors Methods ***
   if (req.url === "/professors") {
     const professorsSqlQuery = "SELECT * FROM instructor";
 
@@ -39,6 +68,7 @@ const server = http.createServer((req, res) => {
     }
   }
 
+  // *** Students Methods ***
   if (req.url === "/students") {
     const studentsSqlQuery = "SELECT * FROM student";
 
@@ -52,7 +82,6 @@ const server = http.createServer((req, res) => {
     if (req.method === "POST") {
       let body = "";
 
-      // Collect data chunks
       req.on("data", (chunk) => {
         body += chunk.toString();
       });
@@ -65,7 +94,6 @@ const server = http.createServer((req, res) => {
           const departmentName = data.departmentName;
           const totalCredit = data.totalCredit;
 
-          // Insert data into the database
           const query =
             "INSERT INTO student (ID, name, dept_name, tot_cred) VALUES (?, ?, ?, ?)";
           connection.query(
@@ -84,13 +112,14 @@ const server = http.createServer((req, res) => {
             }
           );
         } catch (error) {
-          res.writeHead(400, { "Content-Type": "text/plain" });
+          res.writeHead(400, headers);
           res.end("Invalid JSON");
         }
       });
     }
   }
 
+  // *** Courses Methods ***
   if (req.url === "/courses") {
     const coursesSqlQuery = "SELECT * FROM course";
 
@@ -102,6 +131,7 @@ const server = http.createServer((req, res) => {
     }
   }
 
+  // *** Departments Methods ***
   if (req.url === "/departments") {
     const departmentsSqlQuery = "SELECT * FROM department";
 
