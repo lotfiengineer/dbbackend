@@ -143,6 +143,31 @@ const server = http.createServer((req, res) => {
     }
   }
 
+  // gives back the grade of all the students
+  // if (req.url === "/studentsWithGrade") {
+  //   const studentsWithGradeSqlQuery =
+  //     "select * from (select student.ID, student.name, takes.course_id, takes.semester, takes.year, takes.grade, student.tot_cred from student inner join takes on student.ID = takes.ID) as temp inner join course on course.course_id = temp.course_id";
+
+  //   if (req.method === "GET") {
+  //     connection.query(studentsWithGradeSqlQuery, (err, results) => {
+  //       res.writeHead(200, headers);
+  //       res.end(JSON.stringify(results));
+  //     });
+  //   }
+  // }
+
+  if (req.url.startsWith("/studentsGrade/")) {
+    const id = req.url.split("/").pop();
+
+    const studentsGradeSqlQuery = `select * from (select student.ID, student.name, takes.course_id, takes.semester, takes.year, takes.grade, student.tot_cred from student inner join takes on student.ID = takes.ID) as temp inner join course on course.course_id = temp.course_id where ID = ${id}`;
+    if (req.method === "GET") {
+      connection.query(studentsGradeSqlQuery, (err, results) => {
+        res.writeHead(200, headers);
+        res.end(JSON.stringify(results));
+      });
+    }
+  }
+
   // res.writeHead(404, headers);
   // res.end("Not Found");
 });
